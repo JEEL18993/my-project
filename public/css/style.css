@@ -1,0 +1,143 @@
+.navbar{
+    height : 5rem;
+    background-color: white;
+}
+
+.fa-compass{
+     color: #fe424d;
+     font-size: 2rem; 
+}
+
+.nav-link{
+    color: #222222 !important;
+}
+
+/* footer */
+
+.f-info-links a{
+     text-decoration: none;
+     color: #222222;
+}
+
+.f-info-links a:hover{
+    text-decoration: underline;
+}
+
+.f-info-links ,
+.f-info-social , 
+.f-info-brand {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.f-info-social i{
+     font-size: 1.2rem;
+     margin-right: 1rem;
+}
+
+.f-info{
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+    background-color: #ebebeb;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+}
+
+/* =========================================
+   FILTER BAR STYLES
+   ========================================= */
+
+#filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.filter {
+  text-align: center;
+  margin-right: 2.5rem;
+  margin-top: 1rem;
+  opacity: 0.6; /* Makes them look dim by default */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out; /* Smooth animation */
+}
+
+/* THE HOVER EFFECT */
+.filter:hover {
+  opacity: 1; /* Lights up! */
+  border-bottom: 2px solid black; /* Adds the black line under the icon */
+}
+
+.filter p {
+  font-size: 0.85rem;
+  margin-bottom: 0.2rem;
+  font-weight: 500;
+}
+
+.filter i {
+  font-size: 1.3rem;
+  margin-bottom: 0.3rem;
+}
+
+/* =========================================
+   TAX TOGGLE UI
+   ========================================= */
+
+.tax-toggle {
+  border: 1px solid #ddd;
+  border-radius: 1rem;
+  height: 3.25rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  
+  /* This magically pushes the switch to the far right! */
+  margin-left: auto; 
+}
+
+.tax-toggle:hover {
+  border: 1px solid black;
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+/* Adjusting the label text slightly */
+.tax-toggle .form-check-label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+  cursor: pointer;
+}
+
+.tax-toggle .form-check-input {
+  cursor: pointer;
+}
+/* =========================================
+   NAVBAR SEARCH UI
+   ========================================= */
+
+.search-input-container {
+  width: 350px; /* Makes the search bar wider */
+  transition: box-shadow 0.2s; /* Smooth hover effect */
+}
+
+.search-input-container:hover {
+  box-shadow: 0px 3px 8px rgba(0,0,0,0.15) !important;
+}
+
+.search-inp {
+  box-shadow: none !important; /* Removes the blue glow when clicked */
+  outline: none;
+  font-size: 0.95rem;
+  padding-left: 1rem;
+}
+
+.search-btn {
+  font-weight: 500;
+}

@@ -1,0 +1,125 @@
+<% layout('layouts/boilerplate') %>
+
+<script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.3.0/maptiler-sdk.umd.min.js"></script>
+<link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.3.0/maptiler-sdk.css" rel="stylesheet" />
+
+<div class="row mt-3">
+  <div class="col-8 offset-3">
+    <h3><%= listing.title %></h3>
+    <p class="text-muted">Hosted by <%= listing.owner.username %></p>
+  </div>
+
+  <div class="card col-6 offset-3 show-card listing-card">
+    <img src="<%= listing.image.url %>" class="card-img-top show-img" alt="listing_image" />
+    <div class="card-body">
+      <p class="card-text">
+        <i><%= listing.description %></i><br>
+        ₹ <%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %><br>
+        <%= listing.location %><br>
+        <%= listing.country %>
+      </p>
+    </div>
+  </div>
+
+  <% if(currentUser && listing.owner._id.equals(currentUser._id)) { %>
+    <div class="btns offset-3 mb-5">
+      <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark col-1">Edit</a>
+      <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" class="d-inline">
+        <button class="btn btn-danger ms-3">Delete</button>
+      </form>
+    </div>
+  <% } %>
+
+  <div class="col-8 offset-3 mb-3">
+    <% if(currentUser) { %>
+      <hr>
+      <h4>Leave a Review</h4>
+      <form action="/listings/<%= listing._id %>/reviews" method="POST" novalidate class="needs-validation">
+        <div class="mb-3 mt-3">
+          <label class="form-label">Rating</label>
+          <fieldset class="starability-slot">
+            <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
+            <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+            <label for="first-rate1" title="Terrible">1 star</label>
+            <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+            <label for="first-rate2" title="Not good">2 stars</label>
+            <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+            <label for="first-rate3" title="Average">3 stars</label>
+            <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+            <label for="first-rate4" title="Very good">4 stars</label>
+            <input type="radio" id="first-rate5" name="review[rating]" value="5" />
+            <label for="first-rate5" title="Amazing">5 stars</label>
+          </fieldset>
+        </div>
+
+        <div class="mb-3 mt-3">
+          <label for="comment" class="form-label">Comment</label>
+          <textarea name="review[comment]" id="comment" cols="30" rows="5" class="form-control" required></textarea>
+          <div class="invalid-feedback">Please submit some comments for review</div>
+        </div>
+        <button class="btn btn-outline-dark">Submit</button>
+      </form>
+    <% } %>
+
+    <% if(listing.reviews.length > 0) { %>
+      <hr>
+      <p><b>All Reviews</b></p>
+      <div class="row">
+        <% for(let review of listing.reviews) { %>
+          <div class="card col-5 ms-3 mb-3">
+            <div class="card-body">
+              <h5 class="card-title">@<%= review.author.username %></h5>
+              <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
+              <p class="card-text"><%= review.comment %></p>
+              <% if(currentUser && review.author._id.equals(currentUser._id)) { %>
+                <form class="mb-3" method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
+                  <button class="btn btn-sm btn-danger">Delete</button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="col-8 offset-3 mb-3">
+    <hr>
+    <h4>Where you'll be</h4>
+    <div id="map" style="height: 400px; width: 100%; border-radius: 15px; border: 1px solid #ddd;"></div>
+  </div>
+</div>
+
+<script>
+  // 1. Pass the API key and Coordinates from your backend to the frontend
+  const mapToken = "<%= process.env.MAPTILER_API_KEY || 'eIOfAmUriGHfSPBMGcpG' %>"; 
+  const coordinates = <%- listing.geometry && listing.geometry.coordinates ? JSON.stringify(listing.geometry.coordinates) : 'null' %>;
+  const listingLocation = "<%= listing.location %>";
+
+  // 2. Fallback to a default location if the database coordinates are empty
+  const mapCenter = (coordinates && coordinates.length === 2) ? coordinates : [78.9629, 20.5937]; // Default to India
+
+  // 3. Initialize the Map
+  maptilersdk.config.apiKey = mapToken;
+  const map = new maptilersdk.Map({
+    container: 'map', // The ID of your div
+    style: maptilersdk.MapStyle.STREETS, // Map style
+    center: mapCenter, // Starting position [lng, lat]
+    zoom: 9 // Starting zoom level
+  });
+
+  // 4. Add the Red Pin (Marker) to the map
+  if (coordinates && coordinates.length === 2) {
+    const marker = new maptilersdk.Marker({ color: "#FF385C" })
+      .setLngLat(mapCenter)
+      .setPopup(
+        new maptilersdk.Popup({ offset: 25 })
+        .setHTML(`<h5>${listingLocation}</h5><p>Exact location provided after booking.</p>`)
+      )
+      .addTo(map);
+  }
+</script>
+
+</div>
+</div>
+</div>
