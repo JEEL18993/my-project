@@ -1,36 +1,116 @@
-<% layout('layouts/boilerplate') %>
+<% layout("layouts/boilerplate") %>
 
 <script src="https://cdn.maptiler.com/maptiler-sdk-js/v2.3.0/maptiler-sdk.umd.min.js"></script>
 <link href="https://cdn.maptiler.com/maptiler-sdk-js/v2.3.0/maptiler-sdk.css" rel="stylesheet" />
 
-<div class="row mt-3">
-  <div class="col-8 offset-3">
-    <h3><%= listing.title %></h3>
-    <p class="text-muted">Hosted by <%= listing.owner.username %></p>
-  </div>
+<%
+  const galleryImages = [];
+  if (listing.image && listing.image.url) {
+    galleryImages.push(listing.image);
+  }
+  if (listing.images && listing.images.length > 0) {
+    for (let image of listing.images) {
+      if (image && image.url && !galleryImages.some((img) => img.url === image.url)) {
+        galleryImages.push(image);
+      }
+    }
+  }
+%>
 
-  <div class="card col-6 offset-3 show-card listing-card">
-    <img src="<%= listing.image.url %>" class="card-img-top show-img" alt="listing_image" />
-    <div class="card-body">
-      <p class="card-text">
-        <i><%= listing.description %></i><br>
-        ₹ <%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %><br>
-        <%= listing.location %><br>
-        <%= listing.country %>
-      </p>
+<div class="row mt-3">
+  <div class="col-10 offset-1">
+    <h3 class="mb-1"><%= listing.title %></h3>
+    <p class="text-muted mb-3">
+      Hosted by <%= listing.owner.username %> · <%= listing.location %>, <%= listing.country %>
+    </p>
+
+    <% if (galleryImages.length > 0) { %>
+      <div class="listing-gallery <%= galleryImages.length === 1 ? 'single-gallery' : '' %> mb-4">
+        <img src="<%= galleryImages[0].url %>" class="listing-gallery-main" alt="listing main image">
+
+        <% if (galleryImages.length > 1) { %>
+          <div class="listing-gallery-side">
+            <% for (let i = 1; i < Math.min(galleryImages.length, 5); i++) { %>
+              <img src="<%= galleryImages[i].url %>" class="listing-gallery-thumb" alt="listing gallery image">
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="listing-detail-row mb-4">
+      <div>
+        <h4>About this stay</h4>
+        <p class="listing-description"><%= listing.description %></p>
+      </div>
+
+      <div class="listing-price-box">
+        <p class="mb-1 text-muted">Starting from</p>
+        <h4>Rs <%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %></h4>
+        <p class="mb-0 text-muted">per night</p>
+      </div>
     </div>
   </div>
 
   <% if(currentUser && listing.owner._id.equals(currentUser._id)) { %>
-    <div class="btns offset-3 mb-5">
-      <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark col-1">Edit</a>
+    <div class="btns col-10 offset-1 mb-5">
+      <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark">Edit</a>
       <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" class="d-inline">
         <button class="btn btn-danger ms-3">Delete</button>
       </form>
     </div>
   <% } %>
 
-  <div class="col-8 offset-3 mb-3">
+  <div class="col-10 offset-1 mb-3">
+    <hr>
+    <h4>Book this stay</h4>
+
+    <% if(currentUser && !listing.owner._id.equals(currentUser._id)) { %>
+      <form action="/listings/<%= listing._id %>/bookings" method="POST" class="needs-validation" novalidate>
+        <div class="row">
+          <div class="mb-3 col-md-4">
+            <label for="checkIn" class="form-label">Check-in</label>
+            <input type="date" name="booking[checkIn]" id="checkIn" class="form-control" required>
+            <div class="invalid-feedback">Please select a check-in date.</div>
+          </div>
+
+          <div class="mb-3 col-md-4">
+            <label for="checkOut" class="form-label">Check-out</label>
+            <input type="date" name="booking[checkOut]" id="checkOut" class="form-control" required>
+            <div class="invalid-feedback">Please select a check-out date.</div>
+          </div>
+
+          <div class="mb-3 col-md-4">
+            <label for="guests" class="form-label">Guests</label>
+            <input type="number" name="booking[guests]" id="guests" min="1" value="1" class="form-control" required>
+            <div class="invalid-feedback">Please enter number of guests.</div>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="paymentMethod" class="form-label">Payment Method</label>
+          <select name="booking[paymentMethod]" id="paymentMethod" class="form-select" required>
+            <option value="card">Card Demo Payment</option>
+            <option value="upi">UPI Demo Payment</option>
+            <option value="netbanking">Net Banking Demo Payment</option>
+            <option value="cash">Pay At Property</option>
+          </select>
+        </div>
+
+        <p class="text-muted">
+          Price: Rs <%= listing.price ? listing.price.toLocaleString("en-IN") : "N/A" %> / night
+        </p>
+        <button class="btn btn-danger">Book Now</button>
+      </form>
+    <% } else if(currentUser && listing.owner._id.equals(currentUser._id)) { %>
+      <p class="text-muted">You are the owner of this listing.</p>
+    <% } else { %>
+      <p class="text-muted">Please log in to book this stay.</p>
+      <a href="/login" class="btn btn-dark">Log in</a>
+    <% } %>
+  </div>
+
+  <div class="col-10 offset-1 mb-3">
     <% if(currentUser) { %>
       <hr>
       <h4>Leave a Review</h4>
@@ -66,7 +146,7 @@
       <p><b>All Reviews</b></p>
       <div class="row">
         <% for(let review of listing.reviews) { %>
-          <div class="card col-5 ms-3 mb-3">
+          <div class="card col-md-5 ms-3 mb-3">
             <div class="card-body">
               <h5 class="card-title">@<%= review.author.username %></h5>
               <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
@@ -83,7 +163,7 @@
     <% } %>
   </div>
 
-  <div class="col-8 offset-3 mb-3">
+  <div class="col-10 offset-1 mb-3">
     <hr>
     <h4>Where you'll be</h4>
     <div id="map" style="height: 400px; width: 100%; border-radius: 15px; border: 1px solid #ddd;"></div>
@@ -91,35 +171,26 @@
 </div>
 
 <script>
-  // 1. Pass the API key and Coordinates from your backend to the frontend
-  const mapToken = "<%= process.env.MAPTILER_API_KEY || 'eIOfAmUriGHfSPBMGcpG' %>"; 
-  const coordinates = <%- listing.geometry && listing.geometry.coordinates ? JSON.stringify(listing.geometry.coordinates) : 'null' %>;
+  const mapToken = "<%= process.env.MAPTILER_API_KEY || 'eIOfAmUriGHfSPBMGcpG' %>";
+  const coordinates = <%- listing.geometry && listing.geometry.coordinates ? JSON.stringify(listing.geometry.coordinates) : "null" %>;
   const listingLocation = "<%= listing.location %>";
+  const mapCenter = (coordinates && coordinates.length === 2) ? coordinates : [78.9629, 20.5937];
 
-  // 2. Fallback to a default location if the database coordinates are empty
-  const mapCenter = (coordinates && coordinates.length === 2) ? coordinates : [78.9629, 20.5937]; // Default to India
-
-  // 3. Initialize the Map
   maptilersdk.config.apiKey = mapToken;
   const map = new maptilersdk.Map({
-    container: 'map', // The ID of your div
-    style: maptilersdk.MapStyle.STREETS, // Map style
-    center: mapCenter, // Starting position [lng, lat]
-    zoom: 9 // Starting zoom level
+    container: "map",
+    style: maptilersdk.MapStyle.STREETS,
+    center: mapCenter,
+    zoom: 9
   });
 
-  // 4. Add the Red Pin (Marker) to the map
   if (coordinates && coordinates.length === 2) {
-    const marker = new maptilersdk.Marker({ color: "#FF385C" })
+    new maptilersdk.Marker({ color: "#FF385C" })
       .setLngLat(mapCenter)
       .setPopup(
         new maptilersdk.Popup({ offset: 25 })
-        .setHTML(`<h5>${listingLocation}</h5><p>Exact location provided after booking.</p>`)
+          .setHTML(`<h5>${listingLocation}</h5><p>Exact location provided after booking.</p>`)
       )
       .addTo(map);
   }
 </script>
-
-</div>
-</div>
-</div>

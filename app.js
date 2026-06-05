@@ -1,5 +1,5 @@
 if (process.env.NODE_ENV !== "production") {
-    require('dotenv').config();
+    require("dotenv").config();
 }
 
 const express = require("express");
@@ -12,79 +12,77 @@ const session = require("express-session");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
+const MongoStore = require("connect-mongo");
+
 const User = require("./models/user.js");
 
-// --- IMPORT YOUR ACTUAL ROUTERS ---
+// Routes
 const listingRouter = require("./routes/listing.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
+const bookingRouter = require("./routes/booking.js");
+const adminRouter = require("./routes/admin.js");
 
-// Database
-const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
-mongoose.connect(dbUrl).then(() => console.log("✅ DB Connected")).catch(err => console.log(err));
+// ================= DATABASE =================
 
-// Config
-app.engine('ejs', ejsMate);
+const dbUrl = process.env.ATLASDB_URL;
+
+if (!dbUrl) {
+    console.log("❌ ATLASDB_URL is missing");
+    process.exit(1);
+}
+
+mongoose.connect(dbUrl)
+    .then(() => console.log("✅ MongoDB Connected"))
+    .catch(err => console.log("❌ DB Error:", err));
+
+// ================= CONFIG =================
+
+app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
-// 🛡️ BULLETPROOF MONGO STORE CONFIGURATION 🛡️
-let store;
-try {
-    const MongoStoreRaw = require("connect-mongo");
+// ================= SESSION STORE =================
 
-    if (typeof MongoStoreRaw.create === "function") {
-        // We are successfully on Version 4+
-        store = MongoStoreRaw.create({
-            mongoUrl: dbUrl,
-            crypto: { secret: "mysupersecret" },
-            touchAfter: 24 * 3600
-        });
-    } else if (MongoStoreRaw.default && typeof MongoStoreRaw.default.create === "function") {
-        // Catching weird Node.js module quirks
-        store = MongoStoreRaw.default.create({
-            mongoUrl: dbUrl,
-            crypto: { secret: "mysupersecret" },
-            touchAfter: 24 * 3600
-        });
-    } else {
-        // Fallback: We are stuck on Version 3
-        const LegacyStore = require("connect-mongo")(session);
-        store = new LegacyStore({
-            url: dbUrl,
-            secret: process.env.SECRET || "thisshouldbeabettersecret!",
-            touchAfter: 24 * 3600
-        });
-    }
+const store = MongoStore.create({
+    mongoUrl: dbUrl,
+    crypto: {
+        secret: process.env.SECRET || "thisshouldbeabettersecret!"
+    },
+    touchAfter: 24 * 3600
+});
 
-    if (store) {
-        store.on("error", function (e) {
-            console.log("Session Store Error:", e);
-        });
-    }
-} catch (err) {
-    console.log("🚨 Failed to setup MongoStore. Error details:", err);
-}
+store.on("error", (err) => {
+    console.log("❌ Session Store Error:", err);
+});
 
 const sessionOptions = {
-    store: store,
+    store,
     secret: process.env.SECRET || "thisshouldbeabettersecret!",
     resave: false,
-    saveUninitialized: true,
-    cookie: { httpOnly: true }
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true
+    }
 };
 
 app.use(session(sessionOptions));
 app.use(flash());
 
+// ================= PASSPORT =================
+
 app.use(passport.initialize());
 app.use(passport.session());
+
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
+
+// ================= GLOBAL VARIABLES =================
 
 app.use((req, res, next) => {
     res.locals.success = req.flash("success");
@@ -93,27 +91,36 @@ app.use((req, res, next) => {
     next();
 });
 
-// --- CONNECT YOUR ROUTERS ---
+// ================= ROUTES =================
+
 app.get("/", (req, res) => {
     res.redirect("/listings");
 });
 
 app.use("/listings", listingRouter);
 app.use("/listings/:id/reviews", reviewRouter);
+app.use("/listings/:id/bookings", bookingRouter);
+app.use("/bookings", bookingRouter);
+app.use("/admin", adminRouter);
 app.use("/", userRouter);
 
-// Catch-all for 404 errors
-app.all("*", (req, res, next) => {
-    res.status(404).render("listings/error.ejs", { err: { message: "Page Not Found" } }); 
+// ================= ERROR HANDLING =================
+
+app.all("*", (req, res) => {
+    res.status(404).render("listings/error.ejs", {
+        err: { message: "Page Not Found" }
+    });
 });
 
-// Global Error Handler
 app.use((err, req, res, next) => {
-    console.log("🚨 FULL ERROR REPORT:", err); 
-    let errorMessage = err.message || "Something went wrong!";
-    res.status(500).send(`<h3>Oops! An error occurred:</h3><p>${errorMessage}</p>`); 
+    console.log("🚨 FULL ERROR:", err);
+    res.status(500).send(`<h3>Oops! Error:</h3><p>${err.message}</p>`);
 });
 
-app.listen(8080, () => {
-    console.log("🚀 Server running on http://localhost:8080");
+// ================= SERVER =================
+
+const PORT = process.env.PORT || 8080;
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
 });

@@ -1,0 +1,46 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h3>Manage Bookings</h3>
+      <a href="/admin" class="btn btn-outline-dark btn-sm">Admin Home</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Listing</th>
+            <th>User</th>
+            <th>Dates</th>
+            <th>Guests</th>
+            <th>Total</th>
+            <th>Payment</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% for (let booking of bookings) { %>
+            <tr>
+              <td><%= booking.listing ? booking.listing.title : "Deleted listing" %></td>
+              <td><%= booking.user ? booking.user.username : "Deleted user" %></td>
+              <td>
+                <%= booking.checkIn.toLocaleDateString("en-IN") %> -
+                <%= booking.checkOut.toLocaleDateString("en-IN") %>
+              </td>
+              <td><%= booking.guests %></td>
+              <td>Rs <%= booking.totalPrice.toLocaleString("en-IN") %></td>
+              <td><%= booking.paymentStatus || "Demo Paid" %></td>
+              <td>
+                <form method="POST" action="/admin/bookings/<%= booking._id %>?_method=DELETE">
+                  <button class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

@@ -10,6 +10,11 @@ const upload = multer({ storage });
 const listingController = require("../controller/listing.js");
 const { isLoggedIn, isOwner } = require("../middleware.js");
 
+const listingUpload = upload.fields([
+  { name: "listing[image]", maxCount: 1 },
+  { name: "listing[images]", maxCount: 5 },
+]);
+
 const validateListing = (req, res, next) => {
   const { error } = listingSchema.validate(req.body);
   if (error) {
@@ -24,7 +29,7 @@ router
   .get(wrapAsync(listingController.index))
   .post(
     isLoggedIn,
-    upload.single("listing[image]"),
+    listingUpload,
     validateListing,
     wrapAsync(listingController.createListing)
   );
@@ -37,7 +42,7 @@ router
   .put(
     isLoggedIn,
     isOwner,
-    upload.single("listing[image]"),   // ⭐ FIXED
+    listingUpload,
     validateListing,
     wrapAsync(listingController.updatelisting)
   )

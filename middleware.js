@@ -50,3 +50,18 @@ module.exports.isReviewAuthor = async (req, res, next) => {
     }
     next();
 };
+
+module.exports.isAdmin = (req, res, next) => {
+    if (!req.isAuthenticated()) {
+        req.session.redirectUrl = req.originalUrl;
+        req.flash("error", "You must be logged in!");
+        return res.redirect("/login");
+    }
+
+    if (!req.user.isAdmin) {
+        req.flash("error", "You do not have admin access");
+        return res.redirect("/listings");
+    }
+
+    next();
+};

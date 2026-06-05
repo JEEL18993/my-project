@@ -4,30 +4,56 @@ const Listing = require("../models/listing");
 module.exports.index = async (req, res) => {
     // Grab the search query from the URL (e.g., ?q=Goa)
     let searchQuery = req.query.q;
+    let selectedCategory = req.query.category;
+
+    const categoryFilters = {
+        trending: ["luxury", "villa", "resort", "palace", "grand", "retreat", "penthouse"],
+        rooms: ["room", "hotel", "inn", "apartment", "loft", "residency", "cottage"],
+        cities: ["city", "downtown", "urban", "tokyo", "mumbai", "new york", "boston", "miami", "ahmedabad"],
+        mountains: ["mountain", "cabin", "chalet", "hill", "snow", "aspen", "banff", "manali", "shimla"],
+        castles: ["castle", "palace", "heritage", "historic"],
+        pools: ["pool", "villa", "resort", "lagoon", "tropical"],
+        camping: ["camp", "camping", "tent", "desert"],
+        farms: ["farm", "garden", "cottage", "rustic"],
+        arctic: ["snow", "ski", "arctic", "chalet", "shimla"],
+        domes: ["dome", "domes", "igloo", "treehouse", "unique", "retreat"],
+        boats: ["boat", "island", "lake", "lagoon", "riverside", "beach"],
+    };
+
+    const queryConditions = [];
 
     if (searchQuery) {
-        // If there is a search, filter the database using Regex (case-insensitive)
-        const allListings = await Listing.find({
+        queryConditions.push({
             $or: [
                 { location: { $regex: searchQuery, $options: "i" } },
                 { country: { $regex: searchQuery, $options: "i" } },
-                { title: { $regex: searchQuery, $options: "i" } }
+                { title: { $regex: searchQuery, $options: "i" } },
+                { description: { $regex: searchQuery, $options: "i" } },
             ]
         });
-
-        // If the search finds nothing, flash an error and reload all listings
-        if (allListings.length === 0) {
-            req.flash("error", "We couldn't find any listings for that destination.");
-            return res.redirect("/listings");
-        }
-
-        // Render the page with only the searched listings
-        res.render("listings/index", { allListings });
-    } else {
-        // If there is no search (user just clicked "Explore"), show everything
-        const allListings = await Listing.find({});
-        res.render("listings/index", { allListings });
     }
+
+    if (selectedCategory && categoryFilters[selectedCategory]) {
+        const categoryRegex = categoryFilters[selectedCategory].join("|");
+        queryConditions.push({
+            $or: [
+                { location: { $regex: categoryRegex, $options: "i" } },
+                { country: { $regex: categoryRegex, $options: "i" } },
+                { title: { $regex: categoryRegex, $options: "i" } },
+                { description: { $regex: categoryRegex, $options: "i" } },
+            ]
+        });
+    }
+
+    const filterQuery = queryConditions.length > 0 ? { $and: queryConditions } : {};
+    const allListings = await Listing.find(filterQuery);
+
+    if (allListings.length === 0 && (searchQuery || selectedCategory)) {
+        req.flash("error", "We couldn't find any listings for that filter.");
+        return res.redirect("/listings");
+    }
+
+    res.render("listings/index", { allListings, selectedCategory });
 };
 
 // 📌 NEW FORM: Render the create page
@@ -76,11 +102,23 @@ module.exports.createListing = async (req, res) => {
         newListing.geometry = { type: "Point", coordinates: [77.2090, 28.6139] };
     }
 
-    if (req.file) {
+    if (req.files && req.files["listing[image]"]) {
+        const coverImage = req.files["listing[image]"][0];
         newListing.image = {
-            url: req.file.path,
-            filename: req.file.filename,
+            url: coverImage.path,
+            filename: coverImage.filename,
         };
+    }
+
+    if (req.files && req.files["listing[images]"]) {
+        newListing.images = req.files["listing[images]"].map((file) => ({
+            url: file.path,
+            filename: file.filename,
+        }));
+
+        if (!newListing.image || !newListing.image.url) {
+            newListing.image = newListing.images[0];
+        }
     }
 
     await newListing.save();
@@ -117,11 +155,20 @@ module.exports.updatelisting = async (req, res) => {
         listing.geometry = geoData.features[0].geometry;
     }
 
-    if (req.file) {
+    if (req.files && req.files["listing[image]"]) {
+        const coverImage = req.files["listing[image]"][0];
         listing.image = {
-            url: req.file.path,
-            filename: req.file.filename,
+            url: coverImage.path,
+            filename: coverImage.filename,
         };
+    }
+
+    if (req.files && req.files["listing[images]"]) {
+        const newImages = req.files["listing[images]"].map((file) => ({
+            url: file.path,
+            filename: file.filename,
+        }));
+        listing.images = [...(listing.images || []), ...newImages];
     }
 
     await listing.save();

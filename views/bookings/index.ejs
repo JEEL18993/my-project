@@ -1,0 +1,67 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="row mt-3">
+  <div class="col-10 offset-1">
+    <h3>My Bookings</h3>
+
+    <% if (bookings.length === 0) { %>
+      <div class="alert alert-light border mt-4">
+        You do not have any bookings yet.
+      </div>
+      <a href="/listings" class="btn btn-dark">Explore Listings</a>
+    <% } else { %>
+      <div class="row mt-4">
+        <% for (let booking of bookings) { %>
+          <% if (booking.listing) { %>
+            <div class="col-md-6 mb-4">
+              <div class="card h-100 shadow-sm">
+                <% if (booking.listing.image && booking.listing.image.url) { %>
+                  <img
+                    src="<%= booking.listing.image.url %>"
+                    class="card-img-top"
+                    style="height: 220px; object-fit: cover;"
+                    alt="booking listing image"
+                  >
+                <% } %>
+
+                <div class="card-body">
+                  <h5 class="card-title"><%= booking.listing.title %></h5>
+                  <p class="card-text text-muted mb-2">
+                    <%= booking.listing.location %>, <%= booking.listing.country %>
+                  </p>
+                  <p class="card-text mb-1">
+                    <b>Check-in:</b> <%= booking.checkIn.toLocaleDateString("en-IN") %>
+                  </p>
+                  <p class="card-text mb-1">
+                    <b>Check-out:</b> <%= booking.checkOut.toLocaleDateString("en-IN") %>
+                  </p>
+                  <p class="card-text mb-1">
+                    <b>Guests:</b> <%= booking.guests %>
+                  </p>
+                  <p class="card-text">
+                    <b>Total:</b> Rs <%= booking.totalPrice.toLocaleString("en-IN") %>
+                  </p>
+                  <p class="card-text mb-1">
+                    <b>Payment:</b> <%= booking.paymentStatus || "Demo Paid" %>
+                  </p>
+                  <p class="card-text text-muted">
+                    Method: <%= booking.paymentMethod || "card" %>
+                  </p>
+
+                  <a href="/listings/<%= booking.listing._id %>" class="btn btn-dark btn-sm">View Listing</a>
+                  <form
+                    method="POST"
+                    action="/bookings/<%= booking._id %>?_method=DELETE"
+                    class="d-inline"
+                  >
+                    <button class="btn btn-outline-danger btn-sm ms-2">Cancel</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+</div>

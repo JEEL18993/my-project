@@ -66,12 +66,16 @@
   opacity: 0.6; /* Makes them look dim by default */
   cursor: pointer;
   transition: all 0.2s ease-in-out; /* Smooth animation */
+  color: #222222;
+  text-decoration: none;
 }
 
 /* THE HOVER EFFECT */
-.filter:hover {
+.filter:hover,
+.active-filter {
   opacity: 1; /* Lights up! */
   border-bottom: 2px solid black; /* Adds the black line under the icon */
+  color: #222222;
 }
 
 .filter p {
@@ -140,4 +144,101 @@
 
 .search-btn {
   font-weight: 500;
+}
+
+/* =========================================
+   ADMIN PANEL
+   ========================================= */
+
+.admin-stat-card {
+  border-radius: 0.75rem;
+  border: 1px solid #dddddd;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+}
+
+/* =========================================
+   LISTING DETAIL PAGE
+   ========================================= */
+
+.listing-gallery {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 0.5rem;
+  height: 420px;
+  overflow: hidden;
+  position: relative;
+  clear: both;
+}
+
+.single-gallery {
+  grid-template-columns: 1fr;
+}
+
+.listing-gallery-main,
+.listing-gallery-thumb {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: 420px;
+  object-fit: cover;
+  min-height: 0;
+}
+
+.listing-gallery-main {
+  border-radius: 0.75rem;
+}
+
+.listing-gallery-side {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.listing-gallery-thumb {
+  min-height: 0;
+  border-radius: 0.75rem;
+}
+
+.listing-detail-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 2rem;
+  align-items: start;
+  position: relative;
+  z-index: 1;
+  background-color: white;
+}
+
+.listing-description {
+  color: #444;
+  line-height: 1.7;
+}
+
+.listing-price-box {
+  border: 1px solid #dddddd;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+  .listing-gallery,
+  .listing-detail-row {
+    grid-template-columns: 1fr;
+  }
+
+  .listing-gallery {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .listing-gallery-main,
+  .listing-gallery-thumb {
+    height: 220px;
+    max-height: 220px;
+    border-radius: 0.75rem;
+  }
 }
